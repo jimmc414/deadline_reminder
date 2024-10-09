@@ -1,3 +1,5 @@
+# task_cli.py
+
 from rich.console import Console
 from rich.table import Table
 from task_management import TaskManager
@@ -59,13 +61,13 @@ def main():
         elif user_input.isdigit():
             task_id = int(user_input)
             comment = console.input("Add a comment (optional): ")
-
-            # Immediately log the completion of the task
-            task_manager.complete_task(task_id, comment)  # This will update the DB right away
-            logger.log_completion(task_id, comment)  # Log action right away
+            task_manager.complete_task(task_id, comment)
+            logger.log_completion(task_id, comment)
             console.print(f"Task {task_id} marked as complete.")
-            task_manager.reload_tasks()  # Reload tasks to reflect changes
             time.sleep(1)
         else:
             console.print("Invalid input. Please try again.")
             time.sleep(1)
+
+if __name__ == "__main__":
+    main()
