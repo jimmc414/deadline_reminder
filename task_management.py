@@ -1,3 +1,5 @@
+# task_management.py
+
 import yaml
 from data_persistence import Database
 from datetime import datetime, timedelta
@@ -57,12 +59,9 @@ class TaskManager:
             return 'grey50'
 
     def complete_task(self, task_id, comment=''):
-        """
-        Marks the task as complete and immediately writes to the database.
-        """
         self.db.mark_task_complete(task_id, comment)
-        self.reload_tasks()  # Ensure tasks are reloaded immediately after completion
-        
+        self.reload_tasks()
+
     def calculate_due_date(self, task):
         # Simplified due date calculation; extend as needed
         recurrence = task.get('recurrence', 'one-time')
@@ -77,7 +76,6 @@ class TaskManager:
             return next_month.replace(day=1).strftime("%Y-%m-%d")
         else:
             return task.get('due_date', today.strftime("%Y-%m-%d"))
-            
-    def get_last_completed_date(self, task_id):
-        return self.db.get_last_completed_date(task_id)    
 
+    def get_last_completed_date(self, task_id):
+        return self.db.get_last_completed_date(task_id)
