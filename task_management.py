@@ -74,3 +74,7 @@ class TaskManager:
             return next_month.replace(day=1).strftime("%Y-%m-%d")
         else:
             return task.get('due_date', today.strftime("%Y-%m-%d"))
+            
+    def get_last_completed_date(self, task_id):
+        return self.db.get_last_completed_date(task_id)    
+

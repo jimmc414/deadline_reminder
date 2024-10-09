@@ -12,18 +12,21 @@ def display_tasks(task_manager):
     table.add_column("Task Name", style="magenta")
     table.add_column("Due Date", style="green")
     table.add_column("Status", style="yellow")
+    table.add_column("Last Completed", style="blue")  # New column for last completed date
     table.add_column("Notes", style="white")
 
     tasks = task_manager.get_tasks()
 
     for task in tasks:
         status_color = task_manager.get_task_color(task)
-        # Remove the strftime call since the due_date is already a string
+        last_completed_date = task_manager.get_last_completed_date(task['id']) or 'N/A'
+        
         table.add_row(
             str(task['id']),
             task['name'],
-            task['due_date'],  # It's already a string, no need for strftime
+            task['due_date'],
             f"[{status_color}]{task['status']}[/{status_color}]",
+            last_completed_date,  # Display last completed date
             task.get('notes', '')
         )
 

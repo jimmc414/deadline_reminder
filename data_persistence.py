@@ -61,3 +61,14 @@ class Database:
             VALUES (?, DATE('now'), ?)
         ''', (task_id, comment))
         self.conn.commit()
+
+    def get_last_completed_date(self, task_id):
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            SELECT completion_date FROM task_logs
+            WHERE task_id = ?
+            ORDER BY completion_date DESC
+            LIMIT 1
+        ''', (task_id,))
+        result = cursor.fetchone()
+        return result[0] if result else None
