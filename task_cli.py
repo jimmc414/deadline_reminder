@@ -18,10 +18,11 @@ def display_tasks(task_manager):
 
     for task in tasks:
         status_color = task_manager.get_task_color(task)
+        # Remove the strftime call since the due_date is already a string
         table.add_row(
             str(task['id']),
             task['name'],
-            task['due_date'].strftime("%Y-%m-%d"),
+            task['due_date'],  # It's already a string, no need for strftime
             f"[{status_color}]{task['status']}[/{status_color}]",
             task.get('notes', '')
         )
