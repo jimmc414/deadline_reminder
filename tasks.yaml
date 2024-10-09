@@ -1,26 +1,14 @@
 tasks:
   - id: 1
-    name: Daily standup meeting
-    due_date: "2024-10-10"
-    recurrence: daily
-    notes: "Discuss team progress and blockers"
+    name: "Daily Backup"
+    recurrence: "daily"
   - id: 2
-    name: Weekly report submission
-    due_date: "2024-10-11"
-    recurrence: weekly
-    notes: "Include project updates and metrics"
+    name: "Weekly Team Meeting"
+    recurrence: "weekly"
   - id: 3
-    name: Monthly team outing
-    due_date: "2024-11-01"
-    recurrence: monthly
-    notes: "Plan team-building activity"
+    name: "Monthly Report"
+    recurrence: "monthly"
   - id: 4
-    name: Quarterly performance review
-    due_date: "2024-12-15"
-    recurrence: quarterly
-    notes: "Prepare feedback and goals for next quarter"
-  - id: 5
-    name: Annual budget planning
-    due_date: "2024-12-31"
-    recurrence: yearly
-    notes: "Review departmental budgets and allocate resources"
+    name: "Project Deadline"
+    recurrence: "one-time"
+    due_date: "2023-12-31"
