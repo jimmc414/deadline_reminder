@@ -57,9 +57,12 @@ class TaskManager:
             return 'grey50'
 
     def complete_task(self, task_id, comment=''):
+        """
+        Marks the task as complete and immediately writes to the database.
+        """
         self.db.mark_task_complete(task_id, comment)
-        self.reload_tasks()
-
+        self.reload_tasks()  # Ensure tasks are reloaded immediately after completion
+        
     def calculate_due_date(self, task):
         # Simplified due date calculation; extend as needed
         recurrence = task.get('recurrence', 'one-time')

@@ -50,17 +50,23 @@ class Database:
         return task_list
 
     def mark_task_complete(self, task_id, comment):
+        """
+        Updates the task's completion status in the tasks table
+        and logs the completion in the task_logs table.
+        """
         cursor = self.conn.cursor()
+        # Mark the task as completed
         cursor.execute('''
             UPDATE tasks SET completed = ? WHERE id = ?
         ''', (True, task_id))
-        self.conn.commit()
-        # Add to logs
+        self.conn.commit()  # Ensure the task completion is saved immediately
+
+        # Log the completion in the task_logs table
         cursor.execute('''
             INSERT INTO task_logs (task_id, completion_date, comments)
             VALUES (?, DATE('now'), ?)
         ''', (task_id, comment))
-        self.conn.commit()
+        self.conn.commit()  # Ensure the log is written immediately
 
     def get_last_completed_date(self, task_id):
         cursor = self.conn.cursor()
