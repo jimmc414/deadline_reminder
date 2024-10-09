@@ -23,35 +23,32 @@ def load_tasks_from_yaml(yaml_file):
                      recurrence TEXT,
                      status TEXT,
                      completion_date TEXT,
-                     comment TEXT)''')
-    
-    cursor.execute('''CREATE TABLE IF NOT EXISTS audit_trail
-                    (id INTEGER PRIMARY KEY,
-                     task_id INTEGER,
-                     completion_date TEXT,
-                     comment TEXT)''')
+                     notes TEXT)''')
     
     for task in tasks['tasks']:
         cursor.execute("""
-            INSERT INTO tasks (name, due_date, recurrence, status)
-            VALUES (?, ?, ?, ?)
-        """, (task['name'], task['due_date'], task.get('recurrence', 'one-time'), 'pending'))
+            INSERT OR REPLACE INTO tasks (id, name, due_date, recurrence, status, notes)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (task['id'], task['name'], task['due_date'], task.get('recurrence', 'one-time'), 'pending', task.get('notes', '')))
     
     conn.commit()
     conn.close()
 
-def get_task_status(due_date):
+def get_task_status_and_color(due_date, completion_date):
+    if completion_date:
+        return "completed", "grey"
+    
     today = datetime.now().date()
     due = datetime.strptime(due_date, "%Y-%m-%d").date()
     
     if due < today:
-        return "overdue"
+        return "overdue", "red"
     elif due == today:
-        return "due today"
+        return "due today", "green"
     elif due == today + timedelta(days=1):
-        return "upcoming"
+        return "upcoming", "yellow"
     else:
-        return "pending"
+        return "pending", "grey"
 
 def display_tasks():
     table = Table(title="Task List", box=box.MINIMAL_DOUBLE_HEAD)
@@ -59,43 +56,39 @@ def display_tasks():
     table.add_column("Task", style="magenta")
     table.add_column("Due Date", style="green")
     table.add_column("Status", style="yellow")
+    table.add_column("Last Completed", style="blue")
+    table.add_column("Notes", style="white")
 
     conn = sqlite3.connect('tasks.db')
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name, due_date, status FROM tasks WHERE status != 'completed'")
+    cursor.execute("SELECT id, name, due_date, status, completion_date, notes FROM tasks")
     tasks = cursor.fetchall()
 
     for task in tasks:
-        id, name, due_date, _ = task
-        status = get_task_status(due_date)
-        if status == "overdue":
-            status_display = f"[red]{status}[/red]"
-        elif status == "due today":
-            status_display = f"[green]{status}[/green]"
-        elif status == "upcoming":
-            status_display = f"[yellow]{status}[/yellow]"
-        else:
-            status_display = f"[grey]{status}[/grey]"
-        table.add_row(str(id), name, due_date, status_display)
+        id, name, due_date, status, completion_date, notes = task
+        status, color = get_task_status_and_color(due_date, completion_date)
+        table.add_row(
+            f"[{color}]{id}[/{color}]",
+            f"[{color}]{name}[/{color}]",
+            f"[{color}]{due_date}[/{color}]",
+            f"[{color}]{status}[/{color}]",
+            f"[{color}]{completion_date or ''}[/{color}]",
+            f"[{color}]{notes or ''}[/{color}]"
+        )
 
     console.print(table)
     conn.close()
 
-def mark_task_complete(task_id, comment=None):
+def mark_task_complete(task_id):
     conn = sqlite3.connect('tasks.db')
     cursor = conn.cursor()
     
     completion_date = datetime.now().strftime("%Y-%m-%d")
     cursor.execute("""
         UPDATE tasks
-        SET status = ?, completion_date = ?, comment = ?
+        SET status = ?, completion_date = ?
         WHERE id = ?
-    """, ('completed', completion_date, comment, task_id))
-    
-    cursor.execute("""
-        INSERT INTO audit_trail (task_id, completion_date, comment)
-        VALUES (?, ?, ?)
-    """, (task_id, completion_date, comment))
+    """, ('completed', completion_date, task_id))
     
     conn.commit()
     conn.close()
@@ -114,8 +107,7 @@ def run():
         else:
             try:
                 task_id = int(action)
-                comment = typer.prompt("Enter a comment (optional)")
-                mark_task_complete(task_id, comment)
+                mark_task_complete(task_id)
             except ValueError:
                 console.print("Invalid input. Please enter a valid task number.", style="red")
 
