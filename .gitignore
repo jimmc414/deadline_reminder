@@ -20,6 +20,7 @@ output.txt
 **/*~
 *.db
 **/*.db
+test*.py
 
 # OS generated files
 **/._*
