@@ -18,6 +18,8 @@ output.txt
 **/*.vim
 **/*.zwc
 **/*~
+*.db
+**/*.db
 
 # OS generated files
 **/._*
