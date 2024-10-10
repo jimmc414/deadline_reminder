@@ -4,17 +4,21 @@ tasks:
   id: 5
   name: Thursday Scrubs
   notes: QQ.Scrubs.sql -> n:\scrubreport.csv -> LCIMP001
+  recurrence: one-time
+  start_date: '2024-10-16'
   status: Pending
 - completed: 0
   due_date: '2024-10-09'
   id: 7
   name: Daily Reports
   notes: E3 [AACA, Ford, World Credit]
-  status: Due Today
+  recurrence: one-time
+  start_date: '2024-10-09'
+  status: Overdue
 - completed: false
-  due_date: '2024-11-01'
+  due_date: '2024-10-27'
   id: 8
   name: Collection Associates EOM Remit
-  notes: X1 -> Python
+  notes: X1 [Check No, Check Date]
   recurrence: monthly
   start_date: '2024-10-27'

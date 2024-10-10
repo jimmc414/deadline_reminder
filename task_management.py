@@ -26,14 +26,18 @@ class TaskManager:
                 self.db.add_task(task['id'], task['name'], due_date, notes)
             tasks = self.db.get_all_tasks()
         
-        # Ensure all tasks have the 'completed' key and a valid 'due_date'
+        # Ensure all tasks have the required fields
         for task in tasks:
             if 'completed' not in task:
                 task['completed'] = False
             if 'due_date' not in task or task['due_date'] is None:
-                task['due_date'] = self.calculate_due_date(task)
+                task['due_date'] = date.today().strftime("%Y-%m-%d")
             if 'start_date' not in task:
-                task['start_date'] = task['due_date']  # Use due_date as start_date if not present
+                task['start_date'] = task['due_date']
+            if 'recurrence' not in task:
+                task['recurrence'] = 'one-time'  # Default to one-time if not specified
+            if 'notes' not in task:
+                task['notes'] = ''
         
         return tasks
 
@@ -49,6 +53,10 @@ class TaskManager:
         if 'due_date' not in task_data or task_data['due_date'] is None:
             task_data['due_date'] = task_data['start_date']
 
+        # Ensure all required fields are present
+        task_data['recurrence'] = task_data.get('recurrence', 'one-time')
+        task_data['notes'] = task_data.get('notes', '')
+
         # Add the new task to the list
         self.tasks.append(task_data)
 
@@ -56,8 +64,7 @@ class TaskManager:
         self.save_tasks_to_yaml()
 
         # Add the task to the database
-        notes = task_data.get('notes', '')
-        self.db.add_task(new_id, task_data['name'], task_data['due_date'], notes)
+        self.db.add_task(new_id, task_data['name'], task_data['due_date'], task_data['notes'])
 
     def delete_task(self, task_id):
         # Remove the task from the list
@@ -75,7 +82,7 @@ class TaskManager:
 
     def calculate_due_date(self, task):
         recurrence = task.get('recurrence', 'one-time')
-        start_date = datetime.strptime(task['start_date'], "%Y-%m-%d").date() if 'start_date' in task else date.today()
+        start_date = datetime.strptime(task.get('start_date', date.today().strftime("%Y-%m-%d")), "%Y-%m-%d").date()
         
         if recurrence == 'daily':
             return start_date.strftime("%Y-%m-%d")
@@ -89,7 +96,7 @@ class TaskManager:
     def calculate_next_due_date(self, task):
         start_date = datetime.strptime(task['start_date'], "%Y-%m-%d").date()
         current_due_date = datetime.strptime(task['due_date'], "%Y-%m-%d").date()
-        recurrence = task['recurrence']
+        recurrence = task.get('recurrence', 'one-time')
 
         if recurrence == 'daily':
             return (current_due_date + timedelta(days=1)).strftime("%Y-%m-%d")
@@ -101,7 +108,7 @@ class TaskManager:
             while next_due_date.month == (current_due_date + relativedelta(months=1)).month:
                 next_due_date -= timedelta(days=1)
             return next_due_date.strftime("%Y-%m-%d")
-        else:  # one-time
+        else:  # one-time or unknown recurrence
             return task['due_date']
 
     def get_tasks(self):
@@ -109,7 +116,7 @@ class TaskManager:
         for task in self.tasks:
             task_due_date = datetime.strptime(task['due_date'], "%Y-%m-%d").date()
             if task_due_date < today and not task['completed']:
-                if task['recurrence'] != 'one-time':
+                if task.get('recurrence', 'one-time') != 'one-time':
                     # Calculate the next due date
                     task['due_date'] = self.calculate_next_due_date(task)
                     # Update the task in the database
