@@ -20,7 +20,8 @@ class TaskManager:
             # Initialize tasks in the database
             for task in self.tasks_config:
                 due_date = self.calculate_due_date(task)
-                self.db.add_task(task['id'], task['name'], due_date)
+                notes = task.get('notes', '')  # Fetch notes from YAML
+                self.db.add_task(task['id'], task['name'], due_date, notes)  # Add notes to the database
             tasks = self.db.get_all_tasks()
         return tasks
 

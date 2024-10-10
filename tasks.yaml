@@ -2,13 +2,17 @@ tasks:
   - id: 1
     name: "Daily Backup"
     recurrence: "daily"
+    notes: "Ensure that the database is backed up to cloud storage."
   - id: 2
     name: "Weekly Team Meeting"
     recurrence: "weekly"
+    notes: "Prepare the weekly agenda."
   - id: 3
     name: "Monthly Report"
     recurrence: "monthly"
+    notes: "Consolidate data from all departments."
   - id: 4
     name: "Project Deadline"
     recurrence: "one-time"
     due_date: "2023-12-31"
+    notes: "Final submission for the project. All deliverables must be included."

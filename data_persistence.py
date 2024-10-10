@@ -28,12 +28,12 @@ class Database:
         ''')
         self.conn.commit()
 
-    def add_task(self, task_id, name, due_date):
+    def add_task(self, task_id, name, due_date, notes=''):  # Accept notes as an argument
         cursor = self.conn.cursor()
         cursor.execute('''
             INSERT OR IGNORE INTO tasks (id, name, due_date, completed, notes)
             VALUES (?, ?, ?, ?, ?)
-        ''', (task_id, name, due_date, False, ''))
+        ''', (task_id, name, due_date, False, notes))  # Add notes when inserting task
         self.conn.commit()
 
     def get_all_tasks(self):
