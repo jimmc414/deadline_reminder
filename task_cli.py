@@ -1,3 +1,5 @@
+# task_cli.py
+
 from rich.console import Console
 from rich.table import Table
 from task_management import TaskManager
@@ -13,7 +15,7 @@ def display_tasks(task_manager):
     table.add_column("Task Name", style="magenta")
     table.add_column("Due Date", style="green")
     table.add_column("Status", style="yellow")
-    table.add_column("Last Completed", style="blue")  # New column for last completed date
+    table.add_column("Last Completed", style="blue")
     table.add_column("Notes", style="white")
 
     tasks = task_manager.get_tasks()
@@ -27,7 +29,7 @@ def display_tasks(task_manager):
             task['name'],
             task['due_date'],
             f"[{status_color}]{task['status']}[/{status_color}]",
-            last_completed_date,  # Display last completed date
+            last_completed_date,
             task.get('notes', '')
         )
 
@@ -63,6 +65,8 @@ def add_task_prompt(task_manager):
                     break
             except ValueError:
                 console.print("Invalid date format. Please use YYYY-MM-DD.")
+    else:
+        due_date = start_date  # For recurring tasks, initial due date is the same as start date
     
     notes = console.input("Notes (optional): ")
 
@@ -70,13 +74,13 @@ def add_task_prompt(task_manager):
         'name': name,
         'recurrence': recurrence,
         'start_date': start_date.strftime("%Y-%m-%d"),
-        'due_date': due_date.strftime("%Y-%m-%d") if due_date else None,
+        'due_date': due_date.strftime("%Y-%m-%d"),
         'notes': notes
     }
 
     task_manager.add_task(task_data)
     console.print("Task added successfully!")
-    
+
 def delete_task_prompt(task_manager):
     task_id = console.input("Enter the ID of the task to delete: ")
     if task_id.isdigit():

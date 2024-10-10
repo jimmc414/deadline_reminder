@@ -1,6 +1,7 @@
 import yaml
 from data_persistence import Database
-from datetime import datetime, timedelta
+from datetime import datetime, date, timedelta
+from dateutil.relativedelta import relativedelta
 
 class TaskManager:
     def __init__(self):
@@ -9,8 +10,11 @@ class TaskManager:
         self.tasks = self.load_tasks_from_db()
 
     def load_tasks_config(self):
-        with open('tasks.yaml', 'r') as file:
-            return yaml.safe_load(file)['tasks']
+        try:
+            with open('tasks.yaml', 'r') as file:
+                return yaml.safe_load(file)['tasks']
+        except FileNotFoundError:
+            return []  # Return an empty list if the file doesn't exist
 
     def load_tasks_from_db(self):
         tasks = self.db.get_all_tasks()
@@ -22,68 +26,16 @@ class TaskManager:
                 self.db.add_task(task['id'], task['name'], due_date, notes)
             tasks = self.db.get_all_tasks()
         
-        # Ensure all tasks have the 'completed' key
+        # Ensure all tasks have the 'completed' key and a valid 'due_date'
         for task in tasks:
             if 'completed' not in task:
                 task['completed'] = False
+            if 'due_date' not in task or task['due_date'] is None:
+                task['due_date'] = self.calculate_due_date(task)
+            if 'start_date' not in task:
+                task['start_date'] = task['due_date']  # Use due_date as start_date if not present
         
         return tasks
-        
-    def reload_tasks(self):
-        self.tasks = self.load_tasks_from_db()
-
-    def get_tasks(self):
-        # Update task statuses based on current date
-        for task in self.tasks:
-            task['status'] = self.determine_status(task)
-        return self.tasks
-
-    def determine_status(self, task):
-        today = datetime.now().date()
-        if task['completed']:
-            return 'Completed'
-        due_date = datetime.strptime(task['due_date'], "%Y-%m-%d").date()
-        if due_date < today:
-            return 'Overdue'
-        elif due_date == today:
-            return 'Due Today'
-        elif due_date == today + timedelta(days=1):
-            return 'Upcoming'
-        else:
-            return 'Pending'
-            
-    def get_task_color(self, task):
-        status = task['status']
-        if status == 'Overdue':
-            return 'red'
-        elif status == 'Due Today':
-            return 'green'
-        elif status == 'Upcoming':
-            return 'yellow'
-        else:
-            return 'grey50'
-
-    def complete_task(self, task_id, comment=''):
-        self.db.mark_task_complete(task_id, comment)
-        self.reload_tasks()
-
-    def calculate_due_date(self, task):
-        recurrence = task.get('recurrence', 'one-time')
-        today = datetime.now().date()
-        
-        if recurrence == 'daily':
-            return today.strftime("%Y-%m-%d")
-        elif recurrence == 'weekly':
-            next_week = today + timedelta(weeks=1)
-            return next_week.strftime("%Y-%m-%d")
-        elif recurrence == 'monthly':
-            next_month = today.replace(day=28) + timedelta(days=4)
-            return next_month.replace(day=1).strftime("%Y-%m-%d")
-        else:  # one-time or custom date
-            return task.get('due_date', today.strftime("%Y-%m-%d"))
-
-    def get_last_completed_date(self, task_id):
-        return self.db.get_last_completed_date(task_id)
 
     def add_task(self, task_data):
         # Generate a new unique ID
@@ -93,9 +45,9 @@ class TaskManager:
         # Add the 'completed' key
         task_data['completed'] = False
 
-        # Calculate the due date if not provided
-        if not task_data.get('due_date'):
-            task_data['due_date'] = self.calculate_due_date(task_data)
+        # Set the initial due date to the start date if not provided
+        if 'due_date' not in task_data or task_data['due_date'] is None:
+            task_data['due_date'] = task_data['start_date']
 
         # Add the new task to the list
         self.tasks.append(task_data)
@@ -121,10 +73,84 @@ class TaskManager:
         with open('tasks.yaml', 'w') as file:
             yaml.dump({'tasks': self.tasks}, file)
 
-    # Replace the existing load_tasks_config method with this updated version
-    def load_tasks_config(self):
-        try:
-            with open('tasks.yaml', 'r') as file:
-                return yaml.safe_load(file)['tasks']
-        except FileNotFoundError:
-            return []  # Return an empty list if the file doesn't exist
+    def calculate_due_date(self, task):
+        recurrence = task.get('recurrence', 'one-time')
+        start_date = datetime.strptime(task['start_date'], "%Y-%m-%d").date() if 'start_date' in task else date.today()
+        
+        if recurrence == 'daily':
+            return start_date.strftime("%Y-%m-%d")
+        elif recurrence == 'weekly':
+            return start_date.strftime("%Y-%m-%d")
+        elif recurrence == 'monthly':
+            return start_date.strftime("%Y-%m-%d")
+        else:  # one-time or custom date
+            return task.get('due_date', start_date.strftime("%Y-%m-%d"))
+
+    def calculate_next_due_date(self, task):
+        start_date = datetime.strptime(task['start_date'], "%Y-%m-%d").date()
+        current_due_date = datetime.strptime(task['due_date'], "%Y-%m-%d").date()
+        recurrence = task['recurrence']
+
+        if recurrence == 'daily':
+            return (current_due_date + timedelta(days=1)).strftime("%Y-%m-%d")
+        elif recurrence == 'weekly':
+            return (current_due_date + timedelta(weeks=1)).strftime("%Y-%m-%d")
+        elif recurrence == 'monthly':
+            next_due_date = current_due_date + relativedelta(months=1)
+            # Adjust for months with fewer days
+            while next_due_date.month == (current_due_date + relativedelta(months=1)).month:
+                next_due_date -= timedelta(days=1)
+            return next_due_date.strftime("%Y-%m-%d")
+        else:  # one-time
+            return task['due_date']
+
+    def get_tasks(self):
+        today = date.today()
+        for task in self.tasks:
+            task_due_date = datetime.strptime(task['due_date'], "%Y-%m-%d").date()
+            if task_due_date < today and not task['completed']:
+                if task['recurrence'] != 'one-time':
+                    # Calculate the next due date
+                    task['due_date'] = self.calculate_next_due_date(task)
+                    # Update the task in the database
+                    self.db.update_task_due_date(task['id'], task['due_date'])
+            task['status'] = self.determine_status(task)
+        return self.tasks
+
+    def determine_status(self, task):
+        today = date.today()
+        if task['completed']:
+            return 'Completed'
+        due_date = datetime.strptime(task['due_date'], "%Y-%m-%d").date()
+        if due_date < today:
+            return 'Overdue'
+        elif due_date == today:
+            return 'Due Today'
+        elif due_date == today + timedelta(days=1):
+            return 'Upcoming'
+        else:
+            return 'Pending'
+
+    def get_task_color(self, task):
+        status = task['status']
+        if status == 'Overdue':
+            return 'red'
+        elif status == 'Due Today':
+            return 'green'
+        elif status == 'Upcoming':
+            return 'yellow'
+        else:
+            return 'grey50'
+
+    def complete_task(self, task_id, comment=''):
+        for task in self.tasks:
+            if task['id'] == task_id:
+                task['completed'] = True
+                break
+        self.db.mark_task_complete(task_id, comment)
+
+    def reload_tasks(self):
+        self.tasks = self.load_tasks_from_db()
+
+    def get_last_completed_date(self, task_id):
+        return self.db.get_last_completed_date(task_id)

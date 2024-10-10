@@ -68,6 +68,11 @@ class Database:
         self.conn.commit()
         self.conn.commit()
 
+    def update_task_due_date(self, task_id, new_due_date):
+        cursor = self.conn.cursor()
+        cursor.execute('UPDATE tasks SET due_date = ? WHERE id = ?', (new_due_date, task_id))
+        self.conn.commit()
+
     def get_last_completed_date(self, task_id):
         cursor = self.conn.cursor()
         cursor.execute('''
