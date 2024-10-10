@@ -2,6 +2,11 @@
 # Outputs
 *_output.txt
 output.txt
+*.db
+**/*.db
+test*.py
+uncompressed_output.txt
+compressed_output.txt
 
 # Env
 .env
@@ -18,9 +23,6 @@ output.txt
 **/*.vim
 **/*.zwc
 **/*~
-*.db
-**/*.db
-test*.py
 
 # OS generated files
 **/._*
