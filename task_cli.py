@@ -34,6 +34,46 @@ def display_tasks(task_manager):
 
     console.print(table)
 
+# Add these new functions to task_cli.py and update the main function
+
+from rich.console import Console
+from rich.table import Table
+from task_management import TaskManager
+from logging_and_undo import Logger
+import time
+
+console = Console()
+
+# ... (existing functions)
+
+def add_task_prompt(task_manager):
+    console.print("Adding a new task:")
+    name = console.input("Task name: ")
+    recurrence = console.input("Recurrence (daily/weekly/monthly/one-time): ")
+    due_date = None
+    if recurrence == 'one-time':
+        due_date = console.input("Due date (YYYY-MM-DD): ")
+    notes = console.input("Notes (optional): ")
+
+    task_data = {
+        'name': name,
+        'recurrence': recurrence,
+        'due_date': due_date,
+        'notes': notes
+    }
+
+    task_manager.add_task(task_data)
+    console.print("Task added successfully!")
+
+def delete_task_prompt(task_manager):
+    task_id = console.input("Enter the ID of the task to delete: ")
+    if task_id.isdigit():
+        task_id = int(task_id)
+        task_manager.delete_task(task_id)
+        console.print(f"Task {task_id} deleted successfully!")
+    else:
+        console.print("Invalid task ID. Please enter a number.")
+
 def main():
     task_manager = TaskManager()
     logger = Logger()
@@ -42,32 +82,34 @@ def main():
         console.clear()
         display_tasks(task_manager)
 
-        console.print("\nEnter the task ID to mark as complete, 'u' to undo last action, 'e' to export logs, 'q' to quit.")
+        console.print("\nEnter the task ID to mark as complete, 'a' to add a task, 'd' to delete a task, 'u' to undo last action, 'e' to export logs, 'q' to quit.")
         user_input = console.input("Your choice: ")
 
         if user_input.lower() == 'q':
             break
+        elif user_input.lower() == 'a':
+            add_task_prompt(task_manager)
+        elif user_input.lower() == 'd':
+            delete_task_prompt(task_manager)
         elif user_input.lower() == 'u':
             if logger.undo_last_action():
                 console.print("Last action undone.")
                 task_manager.reload_tasks()
             else:
                 console.print("No actions to undo.")
-            time.sleep(1)
         elif user_input.lower() == 'e':
             logger.export_logs_to_csv()
             console.print("Logs exported to task_logs.csv.")
-            time.sleep(1)
         elif user_input.isdigit():
             task_id = int(user_input)
             comment = console.input("Add a comment (optional): ")
             task_manager.complete_task(task_id, comment)
             logger.log_completion(task_id, comment)
             console.print(f"Task {task_id} marked as complete.")
-            time.sleep(1)
         else:
             console.print("Invalid input. Please try again.")
-            time.sleep(1)
+        
+        time.sleep(1)
 
 if __name__ == "__main__":
     main()
