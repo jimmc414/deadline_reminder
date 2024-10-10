@@ -1,25 +1,14 @@
 tasks:
 - completed: 0
   due_date: '2024-10-16'
-  id: 2
-  name: Weekly Team Meeting
-  notes: Prepare the weekly agenda.
-  status: Pending
-- completed: 0
-  due_date: '2024-11-01'
-  id: 3
-  name: Monthly Report
-  notes: Consolidate data from all departments.
-  status: Pending
-- completed: 0
-  due_date: '2023-12-31'
-  id: 4
-  name: Project Deadline
-  notes: Final submission for the project. All deliverables must be included.
-  status: Overdue
-- completed: 0
-  due_date: '2024-10-16'
   id: 5
   name: Thursday Scrubs
   notes: QQ.Scrubs.sql -> n:\scrubreport.csv -> LCIMP001
   status: Pending
+- completed: false
+  due_date: '2024-10-09'
+  id: 7
+  name: Daily Reports
+  notes: E3 [AACA, Ford, World Credit]
+  recurrence: daily
+  status: Due Today

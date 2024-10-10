@@ -53,7 +53,7 @@ class TaskManager:
             return 'Upcoming'
         else:
             return 'Pending'
-
+            
     def get_task_color(self, task):
         status = task['status']
         if status == 'Overdue':
@@ -70,9 +70,9 @@ class TaskManager:
         self.reload_tasks()
 
     def calculate_due_date(self, task):
-        # Simplified due date calculation; extend as needed
         recurrence = task.get('recurrence', 'one-time')
         today = datetime.now().date()
+        
         if recurrence == 'daily':
             return today.strftime("%Y-%m-%d")
         elif recurrence == 'weekly':
@@ -81,7 +81,7 @@ class TaskManager:
         elif recurrence == 'monthly':
             next_month = today.replace(day=28) + timedelta(days=4)
             return next_month.replace(day=1).strftime("%Y-%m-%d")
-        else:
+        else:  # one-time or custom date
             return task.get('due_date', today.strftime("%Y-%m-%d"))
 
     def get_last_completed_date(self, task_id):
@@ -95,6 +95,9 @@ class TaskManager:
         # Add the 'completed' key
         task_data['completed'] = False
 
+        # Calculate the due date
+        task_data['due_date'] = self.calculate_due_date(task_data)
+
         # Add the new task to the list
         self.tasks.append(task_data)
 
@@ -102,9 +105,8 @@ class TaskManager:
         self.save_tasks_to_yaml()
 
         # Add the task to the database
-        due_date = self.calculate_due_date(task_data)
         notes = task_data.get('notes', '')
-        self.db.add_task(new_id, task_data['name'], due_date, notes)
+        self.db.add_task(new_id, task_data['name'], task_data['due_date'], notes)
 
     def delete_task(self, task_id):
         # Remove the task from the list
