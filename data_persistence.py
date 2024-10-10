@@ -61,7 +61,9 @@ class Database:
         cursor.execute('''
             INSERT INTO task_logs (task_id, completion_date, comments)
             VALUES (?, DATE('now'), ?)
-        ''', (task_id, comment))    def delete_task(self, task_id):
+        ''', (task_id, comment))    
+        
+    def delete_task(self, task_id):
         cursor = self.conn.cursor()
         cursor.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
         cursor.execute('DELETE FROM task_logs WHERE task_id = ?', (task_id,))

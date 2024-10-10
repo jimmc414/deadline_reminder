@@ -20,11 +20,17 @@ class TaskManager:
             # Initialize tasks in the database
             for task in self.tasks_config:
                 due_date = self.calculate_due_date(task)
-                notes = task.get('notes', '')  # Fetch notes from YAML
-                self.db.add_task(task['id'], task['name'], due_date, notes)  # Add notes to the database
+                notes = task.get('notes', '')
+                self.db.add_task(task['id'], task['name'], due_date, notes)
             tasks = self.db.get_all_tasks()
+        
+        # Ensure all tasks have the 'completed' key
+        for task in tasks:
+            if 'completed' not in task:
+                task['completed'] = False
+        
         return tasks
-
+        
     def reload_tasks(self):
         self.tasks = self.load_tasks_from_db()
 
@@ -80,10 +86,14 @@ class TaskManager:
 
     def get_last_completed_date(self, task_id):
         return self.db.get_last_completed_date(task_id)
+
     def add_task(self, task_data):
         # Generate a new unique ID
         new_id = max([task['id'] for task in self.tasks], default=0) + 1
         task_data['id'] = new_id
+
+        # Add the 'completed' key
+        task_data['completed'] = False
 
         # Add the new task to the list
         self.tasks.append(task_data)
