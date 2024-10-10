@@ -1,5 +1,3 @@
-# task_cli.py
-
 from rich.console import Console
 from rich.table import Table
 from task_management import TaskManager
@@ -34,37 +32,50 @@ def display_tasks(task_manager):
 
     console.print(table)
 
-# Add these new functions to task_cli.py and update the main function
-
-from rich.console import Console
-from rich.table import Table
-from task_management import TaskManager
-from logging_and_undo import Logger
-import time
-
-console = Console()
-
-# ... (existing functions)
-
 def add_task_prompt(task_manager):
     console.print("Adding a new task:")
     name = console.input("Task name: ")
     recurrence = console.input("Recurrence (daily/weekly/monthly/one-time): ")
+    
+    # Prompt for start date
+    while True:
+        start_date_input = console.input("Start date (YYYY-MM-DD, press Enter for today): ")
+        if start_date_input == "":
+            start_date = date.today()
+            break
+        else:
+            try:
+                start_date = datetime.strptime(start_date_input, "%Y-%m-%d").date()
+                break
+            except ValueError:
+                console.print("Invalid date format. Please use YYYY-MM-DD.")
+    
     due_date = None
     if recurrence == 'one-time':
-        due_date = console.input("Due date (YYYY-MM-DD): ")
+        while True:
+            due_date_input = console.input("Due date (YYYY-MM-DD): ")
+            try:
+                due_date = datetime.strptime(due_date_input, "%Y-%m-%d").date()
+                if due_date < start_date:
+                    console.print("Due date cannot be earlier than start date. Please enter a valid date.")
+                else:
+                    break
+            except ValueError:
+                console.print("Invalid date format. Please use YYYY-MM-DD.")
+    
     notes = console.input("Notes (optional): ")
 
     task_data = {
         'name': name,
         'recurrence': recurrence,
-        'due_date': due_date,
+        'start_date': start_date.strftime("%Y-%m-%d"),
+        'due_date': due_date.strftime("%Y-%m-%d") if due_date else None,
         'notes': notes
     }
 
     task_manager.add_task(task_data)
     console.print("Task added successfully!")
-
+    
 def delete_task_prompt(task_manager):
     task_id = console.input("Enter the ID of the task to delete: ")
     if task_id.isdigit():

@@ -1,5 +1,3 @@
-# logging_and_undo.py
-
 import sqlite3
 import csv
 

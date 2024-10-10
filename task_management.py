@@ -1,5 +1,3 @@
-# task_management.py
-
 import yaml
 from data_persistence import Database
 from datetime import datetime, timedelta
@@ -87,50 +85,28 @@ class TaskManager:
     def get_last_completed_date(self, task_id):
         return self.db.get_last_completed_date(task_id)
 
-def add_task_prompt(task_manager):
-    console.print("Adding a new task:")
-    name = console.input("Task name: ")
-    recurrence = console.input("Recurrence (daily/weekly/monthly/one-time): ")
-    
-    # Prompt for start date
-    while True:
-        start_date_input = console.input("Start date (YYYY-MM-DD, press Enter for today): ")
-        if start_date_input == "":
-            start_date = date.today()
-            break
-        else:
-            try:
-                start_date = datetime.strptime(start_date_input, "%Y-%m-%d").date()
-                break
-            except ValueError:
-                console.print("Invalid date format. Please use YYYY-MM-DD.")
-    
-    due_date = None
-    if recurrence == 'one-time':
-        while True:
-            due_date_input = console.input("Due date (YYYY-MM-DD): ")
-            try:
-                due_date = datetime.strptime(due_date_input, "%Y-%m-%d").date()
-                if due_date < start_date:
-                    console.print("Due date cannot be earlier than start date. Please enter a valid date.")
-                else:
-                    break
-            except ValueError:
-                console.print("Invalid date format. Please use YYYY-MM-DD.")
-    
-    notes = console.input("Notes (optional): ")
+    def add_task(self, task_data):
+        # Generate a new unique ID
+        new_id = max([task['id'] for task in self.tasks], default=0) + 1
+        task_data['id'] = new_id
 
-    task_data = {
-        'name': name,
-        'recurrence': recurrence,
-        'start_date': start_date.strftime("%Y-%m-%d"),
-        'due_date': due_date.strftime("%Y-%m-%d") if due_date else None,
-        'notes': notes
-    }
+        # Add the 'completed' key
+        task_data['completed'] = False
 
-    task_manager.add_task(task_data)
-    console.print("Task added successfully!")
-    
+        # Calculate the due date if not provided
+        if not task_data.get('due_date'):
+            task_data['due_date'] = self.calculate_due_date(task_data)
+
+        # Add the new task to the list
+        self.tasks.append(task_data)
+
+        # Update the YAML file
+        self.save_tasks_to_yaml()
+
+        # Add the task to the database
+        notes = task_data.get('notes', '')
+        self.db.add_task(new_id, task_data['name'], task_data['due_date'], notes)
+
     def delete_task(self, task_id):
         # Remove the task from the list
         self.tasks = [task for task in self.tasks if task['id'] != task_id]
