@@ -80,3 +80,40 @@ class TaskManager:
 
     def get_last_completed_date(self, task_id):
         return self.db.get_last_completed_date(task_id)
+    def add_task(self, task_data):
+        # Generate a new unique ID
+        new_id = max([task['id'] for task in self.tasks], default=0) + 1
+        task_data['id'] = new_id
+
+        # Add the new task to the list
+        self.tasks.append(task_data)
+
+        # Update the YAML file
+        self.save_tasks_to_yaml()
+
+        # Add the task to the database
+        due_date = self.calculate_due_date(task_data)
+        notes = task_data.get('notes', '')
+        self.db.add_task(new_id, task_data['name'], due_date, notes)
+
+    def delete_task(self, task_id):
+        # Remove the task from the list
+        self.tasks = [task for task in self.tasks if task['id'] != task_id]
+
+        # Update the YAML file
+        self.save_tasks_to_yaml()
+
+        # Remove the task from the database
+        self.db.delete_task(task_id)
+
+    def save_tasks_to_yaml(self):
+        with open('tasks.yaml', 'w') as file:
+            yaml.dump({'tasks': self.tasks}, file)
+
+    # Replace the existing load_tasks_config method with this updated version
+    def load_tasks_config(self):
+        try:
+            with open('tasks.yaml', 'r') as file:
+                return yaml.safe_load(file)['tasks']
+        except FileNotFoundError:
+            return []  # Return an empty list if the file doesn't exist

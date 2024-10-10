@@ -61,7 +61,11 @@ class Database:
         cursor.execute('''
             INSERT INTO task_logs (task_id, completion_date, comments)
             VALUES (?, DATE('now'), ?)
-        ''', (task_id, comment))
+        ''', (task_id, comment))    def delete_task(self, task_id):
+        cursor = self.conn.cursor()
+        cursor.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
+        cursor.execute('DELETE FROM task_logs WHERE task_id = ?', (task_id,))
+        self.conn.commit()
         self.conn.commit()
 
     def get_last_completed_date(self, task_id):
@@ -74,3 +78,9 @@ class Database:
         ''', (task_id,))
         result = cursor.fetchone()
         return result[0] if result else None
+
+    def delete_task(self, task_id):
+        cursor = self.conn.cursor()
+        cursor.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
+        cursor.execute('DELETE FROM task_logs WHERE task_id = ?', (task_id,))
+        self.conn.commit()
